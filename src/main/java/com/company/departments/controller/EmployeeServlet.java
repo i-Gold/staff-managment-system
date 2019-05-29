@@ -104,8 +104,8 @@ public class EmployeeServlet extends HttpServlet {
     }
 
     private void getAllEmployees(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException, ServletException {
-        List<EmployeeDTO> employees = employeeService.getAllEmployees();
-        request.setAttribute("listOfEmployees", employees);
+        List<EmployeeDTO> employeesDTO = employeeService.getAllEmployees();
+        request.setAttribute("listOfEmployees", employeesDTO);
         RequestDispatcher dispatcher = request.getRequestDispatcher("employees-view.jsp");
         dispatcher.forward(request, response);
     }

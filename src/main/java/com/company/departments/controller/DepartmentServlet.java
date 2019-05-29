@@ -57,8 +57,8 @@ public class DepartmentServlet extends HttpServlet {
     }
 
     private void getAllDepartments(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException, ServletException {
-        List<DepartmentDTO> departments = departmentService.getAllDepartments();
-        request.setAttribute("listOfDepartments", departments);
+        List<DepartmentDTO> departmentsDTO = departmentService.getAllDepartments();
+        request.setAttribute("listOfDepartments", departmentsDTO);
         RequestDispatcher dispatcher = request.getRequestDispatcher("departments-view.jsp");
         dispatcher.forward(request, response);
     }
