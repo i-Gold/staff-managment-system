@@ -76,8 +76,7 @@ public class EmployeeServlet extends HttpServlet {
     }
 
     private void showEditEmployeeForm(HttpServletRequest request, HttpServletResponse response) throws SQLException, ServletException, IOException {
-        EmployeeDTO employeeDTO = employeeService.findEmployeeById(Long.valueOf(request.getParameter("id")))
-                .orElse(null);
+        EmployeeDTO employeeDTO = employeeService.findEmployeeById(Long.valueOf(request.getParameter("id")));
         RequestDispatcher dispatcher = request.getRequestDispatcher("employee-edit.jsp");
         request.setAttribute("employee", employeeDTO);
         dispatcher.forward(request, response);

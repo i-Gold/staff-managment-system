@@ -32,9 +32,10 @@ public class EmployeeService {
         return employeeDAO.deleteById(id);
     }
 
-    public Optional<EmployeeDTO> findEmployeeById(Long id) throws SQLException {
+    public EmployeeDTO findEmployeeById(Long id) throws SQLException {
         Optional<Employee> employee = employeeDAO.findById(id);
-        return employee.map(EmployeeConverter::toDTO);
+        return employee.map(EmployeeConverter::toDTO)
+                .get();
     }
 
     public Set<EmployeeDTO> findAllByDepartmentId(Long departmentId) throws SQLException {

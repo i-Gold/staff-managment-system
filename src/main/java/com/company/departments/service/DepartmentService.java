@@ -31,9 +31,10 @@ public class DepartmentService {
         return departmentDAO.deleteById(id);
     }
 
-    public Optional<DepartmentDTO> findDepartmentById(Long id) throws SQLException {
+    public DepartmentDTO findDepartmentById(Long id) throws SQLException {
         Optional<Department> department = departmentDAO.findById(id);
-        return department.map(DepartmentConverter::toDTO);
+        return department.map(DepartmentConverter::toDTO)
+                .get();
     }
 
     public List<DepartmentDTO> getAllDepartments() throws SQLException {

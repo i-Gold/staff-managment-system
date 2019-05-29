@@ -79,8 +79,7 @@ public class DepartmentServlet extends HttpServlet {
     }
 
     private void showEditForm(HttpServletRequest request, HttpServletResponse response) throws SQLException, ServletException, IOException {
-        DepartmentDTO departmentDTO = departmentService.findDepartmentById(Long.valueOf(request.getParameter("id")))
-                .orElse(null);
+        DepartmentDTO departmentDTO = departmentService.findDepartmentById(Long.valueOf(request.getParameter("id")));
         RequestDispatcher dispatcher = request.getRequestDispatcher("department-edit.jsp");
         request.setAttribute("department", departmentDTO);
         dispatcher.forward(request, response);
