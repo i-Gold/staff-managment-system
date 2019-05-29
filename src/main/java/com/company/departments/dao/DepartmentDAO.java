@@ -9,9 +9,9 @@ import java.util.Optional;
 
 public interface DepartmentDAO {
 
-    Department add(DepartmentDTO department) throws SQLException;
+    Department add(Department department) throws SQLException;
 
-    Department update(DepartmentDTO department) throws SQLException;
+    Department update(Department department) throws SQLException;
 
     boolean deleteById(Long id) throws SQLException;
 

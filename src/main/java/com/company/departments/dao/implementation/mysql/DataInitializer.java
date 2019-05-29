@@ -1,6 +1,7 @@
 package com.company.departments.dao.implementation.mysql;
 
 import com.company.departments.exception.ConnectionException;
+import org.apache.log4j.Logger;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -8,6 +9,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class DataInitializer {
+
+    private static final Logger logger = Logger.getLogger(DataInitializer.class);
 
     private static final String DB_URL = "jdbc:mysql://localhost:3306/staff?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8";
     private static final String DB_USERNAME = "root";
@@ -35,8 +38,8 @@ public class DataInitializer {
         try {
             Class.forName(DB_DRIVER);
             return DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
-        } catch (SQLException | ClassNotFoundException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            logger.error(e);
             throw new ConnectionException(e.getMessage());
         }
     }
@@ -52,14 +55,15 @@ public class DataInitializer {
             connection = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             createDepartments();
             createEmployees();
-        } catch (SQLException | ClassNotFoundException e) {
+        } catch (Exception e) {
+            logger.error(e);
             throw new ConnectionException(e.getMessage());
         } finally {
             try {
                 if (connection != null)
                     connection.close();
             } catch (SQLException e) {
-                e.printStackTrace();
+                logger.error(e);
             }
         }
     }

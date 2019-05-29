@@ -5,65 +5,53 @@ import com.company.departments.dao.EmployeeDAO;
 import com.company.departments.exception.BadRequest;
 import com.company.departments.model.Employee;
 import com.company.departments.model.dto.EmployeeDTO;
+import org.apache.log4j.Logger;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import static com.company.departments.converter.EmployeeConverter.toDTO;
 import static com.company.departments.dao.implementation.mysql.DataInitializer.getConnection;
 import static com.company.departments.dao.implementation.mysql.queries.Queries.*;
 
 public class EmployeeDAOImpl implements EmployeeDAO {
 
-    private Employee fromDTO(EmployeeDTO employeeDTO) throws SQLException {
-        return new Employee.Builder()
-                .id(employeeDTO.getId())
-                .fullName(employeeDTO.getFullName())
-                .email(employeeDTO.getEmail())
-                .startedWorkAt(employeeDTO.getStartedWorkAt())
-                .department(employeeDTO.getDepartmentId() != null ?
-                        DAOFactory.getInstance()
-                                .getDepartmentDAO().findById(employeeDTO.getDepartmentId()).get()
-                        : null)
-                .build();
-    }
-
-    private EmployeeDTO toDTO(Employee employee) {
-        return new EmployeeDTO.Builder()
-                .id(employee.getId())
-                .fullName(employee.getFullName())
-                .email(employee.getEmail())
-                .startedWorkAt(employee.getStartedWorkAt())
-                .departmentId(Objects.nonNull(employee.getDepartment()) ?
-                        employee.getDepartment().getId()
-                        : null)
-                .build();
-    }
+    private static final Logger logger = Logger.getLogger(EmployeeDAOImpl.class);
 
     @Override
-    public Employee add(EmployeeDTO employeeDTO) throws SQLException {
-        if (employeeDTO == null) {
+    public Employee add(Employee employee) throws SQLException {
+        if (employee == null) {
             throw new BadRequest();
         }
-        try (PreparedStatement query = getConnection().prepareStatement(CREATE_EMPLOYEE)) {
-            setParametersAndExecuteQuery(query, employeeDTO);
-            try (PreparedStatement updateDepartment = getConnection().prepareStatement(CHANGE_AMOUNT_OF_EMPLOYEES_UP)) {
-                updateDepartment.setLong(1, employeeDTO.getDepartmentId());
-                updateDepartment.executeUpdate();
+        try (Connection connection = getConnection()) {
+            try (PreparedStatement query = connection.prepareStatement(CREATE_EMPLOYEE)) {
+                connection.setAutoCommit(false);
+                setParametersAndExecuteQuery(query, employee);
+                try (PreparedStatement updateDepartment = connection.prepareStatement(CHANGE_AMOUNT_OF_EMPLOYEES_UP)) {
+                    updateDepartment.setLong(1, employee.getDepartment().getId());
+                    updateDepartment.executeUpdate();
+                }
+                connection.commit();
+                return employee;
+            } catch (SQLException e) {
+                logger.error(e);
+                connection.rollback();
             }
-            return fromDTO(employeeDTO);
         }
+        throw new SQLException();
     }
 
-    private void setParametersAndExecuteQuery(PreparedStatement query, EmployeeDTO employeeDTO) throws SQLException {
-        query.setString(1, employeeDTO.getFullName());
-        query.setString(2, employeeDTO.getEmail());
-        if (employeeDTO.getId() == null) {
-            query.setLong(3, employeeDTO.getDepartmentId());
+    private void setParametersAndExecuteQuery(PreparedStatement query, Employee employee) throws SQLException {
+        query.setString(1, employee.getFullName());
+        query.setString(2, employee.getEmail());
+        if (employee.getId() == null) {
+            query.setLong(3, employee.getDepartment().getId());
         } else {
-            query.setLong(3, employeeDTO.getId());
+            query.setLong(3, employee.getId());
         }
         query.executeUpdate();
     }
@@ -75,58 +63,81 @@ public class EmployeeDAOImpl implements EmployeeDAO {
                 .email(resultSet.getString("email"))
                 .startedWorkAt(resultSet.getObject("started_work_at", LocalDateTime.class))
                 .department(DAOFactory.getInstance()
-                        .getDepartmentDAO().findById(resultSet.getLong("department_id")).get())
+                        .getDepartmentDAO().findById(resultSet.getLong("department_id"))
+                        .orElse(null))
                 .build();
     }
 
     @Override
-    public Employee update(EmployeeDTO employeeDTO) throws SQLException {
-        if (employeeDTO == null) {
+    public Employee update(Employee employee) throws SQLException {
+        if (employee == null) {
             throw new BadRequest();
         }
-        try (PreparedStatement query = getConnection().prepareStatement(UPDATE_EMPLOYEE)) {
-            setParametersAndExecuteQuery(query, employeeDTO);
-            return fromDTO(employeeDTO);
+        try (Connection connection = getConnection()) {
+            try (PreparedStatement query = connection.prepareStatement(UPDATE_EMPLOYEE)) {
+                connection.setAutoCommit(false);
+                setParametersAndExecuteQuery(query, employee);
+                connection.commit();
+                return employee;
+            } catch (SQLException e) {
+                logger.error(e);
+                connection.rollback();
+            }
         }
+        throw new SQLException();
     }
 
     @Override
     public boolean deleteById(Long id) throws SQLException {
-        Employee employee = new DAOFactoryImpl().getEmployeeDAO()
-                .findById(id).get();
-        try (PreparedStatement query = getConnection().prepareStatement(DELETE_EMPLOYEE)) {
-            query.setLong(1, id);
-            boolean result = query.execute();
-            try (PreparedStatement updateDepartment = getConnection().prepareStatement(CHANGE_AMOUNT_OF_EMPLOYEES_DOWN)) {
-                updateDepartment.setLong(1, employee.getDepartment().getId());
-                updateDepartment.executeUpdate();
+        Employee employee = findById(id)
+                .orElse(null);
+        if (employee != null) {
+            try (Connection connection = getConnection()) {
+                try (PreparedStatement query = getConnection().prepareStatement(DELETE_EMPLOYEE)) {
+                    connection.setAutoCommit(false);
+                    query.setLong(1, id);
+                    try (PreparedStatement updateDepartment = getConnection().prepareStatement(CHANGE_AMOUNT_OF_EMPLOYEES_DOWN)) {
+                        updateDepartment.setLong(1, employee.getDepartment().getId());
+                        updateDepartment.executeUpdate();
+                    }
+                    boolean result = query.execute();
+                    connection.commit();
+                    return result;
+                } catch (SQLException e) {
+                    logger.error(e);
+                    connection.rollback();
+                }
             }
-            return result;
         }
+        return false;
     }
 
     @Override
     public Optional<Employee> findById(Long id) throws SQLException {
-        try (ResultSet resultSet = SearchEntity.find(FIND_EMPLOYEE_BY_ID, id)) {
-            if (resultSet.next()) {
-                return Optional.of(getFromResultSet(resultSet));
+        try (Connection connection = getConnection()) {
+            try (ResultSet resultSet = SearchEntity.find(connection, FIND_EMPLOYEE_BY_ID, id)) {
+                if (resultSet.next()) {
+                    return Optional.of(getFromResultSet(resultSet));
+                }
+                return Optional.empty();
             }
-            return Optional.empty();
         }
     }
 
     @Override
     public Set<Employee> findAllByDepartmentId(Long departmentId) throws SQLException {
         Set<Employee> result = new HashSet<>();
-        try (PreparedStatement query = getConnection().prepareStatement(GET_ALL_EMPLOYEES_OF_DEPARTMENT)) {
-            query.setLong(1, departmentId);
-            boolean founded = query.execute();
-            if (!founded) {
-                return new HashSet<>();
-            }
-            try (ResultSet resultSet = query.getResultSet()) {
-                while (resultSet.next()) {
-                    result.add(getFromResultSet(resultSet));
+        try (Connection connection = getConnection()) {
+            try (PreparedStatement query = connection.prepareStatement(GET_ALL_EMPLOYEES_OF_DEPARTMENT)) {
+                query.setLong(1, departmentId);
+                boolean founded = query.execute();
+                if (!founded) {
+                    return new HashSet<>();
+                }
+                try (ResultSet resultSet = query.getResultSet()) {
+                    while (resultSet.next()) {
+                        result.add(getFromResultSet(resultSet));
+                    }
                 }
             }
         }
@@ -136,12 +147,14 @@ public class EmployeeDAOImpl implements EmployeeDAO {
     @Override
     public List<EmployeeDTO> getAll() throws SQLException {
         List<EmployeeDTO> result = new ArrayList<>();
-        try (PreparedStatement query = getConnection().prepareStatement(GET_ALL_EMPLOYEES_FROM_DATABASE)) {
-            try (ResultSet resultSet = query.executeQuery()) {
-                while (resultSet.next()) {
-                    result.add(
-                            toDTO(getFromResultSet(resultSet))
-                    );
+        try (Connection connection = getConnection()) {
+            try (PreparedStatement query = connection.prepareStatement(GET_ALL_EMPLOYEES_FROM_DATABASE)) {
+                try (ResultSet resultSet = query.executeQuery()) {
+                    while (resultSet.next()) {
+                        result.add(
+                                toDTO(getFromResultSet(resultSet))
+                        );
+                    }
                 }
             }
         }

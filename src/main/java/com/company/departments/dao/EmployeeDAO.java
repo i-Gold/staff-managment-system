@@ -10,9 +10,9 @@ import java.util.Set;
 
 public interface EmployeeDAO {
 
-    Employee add(EmployeeDTO employee) throws SQLException;
+    Employee add(Employee employee) throws SQLException;
 
-    Employee update(EmployeeDTO employee) throws SQLException;
+    Employee update(Employee employee) throws SQLException;
 
     boolean deleteById(Long id) throws SQLException;
 
