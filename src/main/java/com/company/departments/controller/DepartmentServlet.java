@@ -3,6 +3,7 @@ package com.company.departments.controller;
 import com.company.departments.model.Department;
 import com.company.departments.model.dto.DepartmentDTO;
 import com.company.departments.service.DepartmentService;
+import org.apache.log4j.Logger;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -21,6 +22,7 @@ import java.util.Objects;
 public class DepartmentServlet extends HttpServlet {
 
     private static final long serialVersionUID = 3082591028280949051L;
+    private static final Logger logger = Logger.getLogger(DepartmentServlet.class);
     private final DepartmentService departmentService = new DepartmentService();
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -51,7 +53,8 @@ public class DepartmentServlet extends HttpServlet {
                     break;
             }
         } catch (SQLException e) {
-            throw new ServletException(e);
+            logger.error(e);
+            throw new ServletException(e.getMessage());
         }
     }
 
