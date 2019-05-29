@@ -54,7 +54,7 @@
                     <th>Department's ID:</th>
                     <td>
                         <input type="text" name="departmentId" size="15"
-                               value="<c:out value='${employee.department.id}' />"
+                               value="<c:out value='${employee.departmentId}' />"
                         />
                     </td>
                 </tr>

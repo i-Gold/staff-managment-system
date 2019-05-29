@@ -4,7 +4,6 @@ import com.company.departments.dao.DAOFactory;
 import com.company.departments.dao.EmployeeDAO;
 import com.company.departments.exception.BadRequest;
 import com.company.departments.model.Employee;
-import com.company.departments.model.dto.EmployeeDTO;
 import org.apache.log4j.Logger;
 
 import java.sql.Connection;
@@ -14,13 +13,12 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.*;
 
-import static com.company.departments.converter.EmployeeConverter.toDTO;
 import static com.company.departments.dao.implementation.mysql.DataInitializer.getConnection;
 import static com.company.departments.dao.implementation.mysql.queries.Queries.*;
 
 public class EmployeeDAOImpl implements EmployeeDAO {
 
-    private static final Logger logger = Logger.getLogger(EmployeeDAOImpl.class);
+    private final Logger logger = Logger.getLogger(this.getClass().getSimpleName());
 
     @Override
     public Employee add(Employee employee) throws SQLException {
@@ -145,14 +143,14 @@ public class EmployeeDAOImpl implements EmployeeDAO {
     }
 
     @Override
-    public List<EmployeeDTO> getAll() throws SQLException {
-        List<EmployeeDTO> result = new ArrayList<>();
+    public List<Employee> getAll() throws SQLException {
+        List<Employee> result = new ArrayList<>();
         try (Connection connection = getConnection()) {
             try (PreparedStatement query = connection.prepareStatement(GET_ALL_EMPLOYEES_FROM_DATABASE)) {
                 try (ResultSet resultSet = query.executeQuery()) {
                     while (resultSet.next()) {
                         result.add(
-                                toDTO(getFromResultSet(resultSet))
+                                getFromResultSet(resultSet)
                         );
                     }
                 }

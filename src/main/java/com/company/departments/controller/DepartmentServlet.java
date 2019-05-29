@@ -1,6 +1,5 @@
 package com.company.departments.controller;
 
-import com.company.departments.model.Department;
 import com.company.departments.model.dto.DepartmentDTO;
 import com.company.departments.service.DepartmentService;
 import org.apache.log4j.Logger;
@@ -13,8 +12,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -22,7 +19,8 @@ import java.util.Objects;
 public class DepartmentServlet extends HttpServlet {
 
     private static final long serialVersionUID = 3082591028280949051L;
-    private static final Logger logger = Logger.getLogger(DepartmentServlet.class);
+
+    private final Logger logger = Logger.getLogger(this.getClass().getSimpleName());
     private final DepartmentService departmentService = new DepartmentService();
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -66,19 +64,11 @@ public class DepartmentServlet extends HttpServlet {
     }
 
     private void addNewDepartment(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException {
-        HashSet<Long> employeeIds = new HashSet<>();
-        Enumeration<String> parameters = request.getParameterNames();
-        while (parameters.hasMoreElements()) {
-            if (parameters.nextElement().equals("employeeId")) {
-                employeeIds.add(Long.valueOf(parameters.nextElement()));
-            }
-        }
         departmentService.addNewDepartment(new DepartmentDTO.Builder()
                 .name(request.getParameter("name"))
                 .amountOfEmployees(Objects.nonNull(request.getParameter("amountOfEmployees")) &&
                         !Objects.equals(request.getParameter("amountOfEmployees"), "") ?
                         Integer.valueOf(request.getParameter("amountOfEmployees")) : 0)
-                .employees(employeeIds)
                 .build());
         response.sendRedirect("departments");
     }
@@ -89,10 +79,10 @@ public class DepartmentServlet extends HttpServlet {
     }
 
     private void showEditForm(HttpServletRequest request, HttpServletResponse response) throws SQLException, ServletException, IOException {
-        Department department = departmentService.findDepartmentById(Long.valueOf(request.getParameter("id")))
+        DepartmentDTO departmentDTO = departmentService.findDepartmentById(Long.valueOf(request.getParameter("id")))
                 .orElse(null);
         RequestDispatcher dispatcher = request.getRequestDispatcher("department-edit.jsp");
-        request.setAttribute("department", department);
+        request.setAttribute("department", departmentDTO);
         dispatcher.forward(request, response);
     }
 

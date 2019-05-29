@@ -1,7 +1,6 @@
 package com.company.departments.dao;
 
 import com.company.departments.model.Employee;
-import com.company.departments.model.dto.EmployeeDTO;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -20,6 +19,6 @@ public interface EmployeeDAO {
 
     Set<Employee> findAllByDepartmentId(Long departmentId) throws SQLException;
 
-    List<EmployeeDTO> getAll() throws SQLException;
+    List<Employee> getAll() throws SQLException;
 
 }

@@ -1,6 +1,5 @@
 package com.company.departments.controller;
 
-import com.company.departments.model.Employee;
 import com.company.departments.model.dto.EmployeeDTO;
 import com.company.departments.service.EmployeeService;
 import org.apache.log4j.Logger;
@@ -21,7 +20,8 @@ import java.util.Set;
 public class EmployeeServlet extends HttpServlet {
 
     private static final long serialVersionUID = 3972921947997968896L;
-    private static final Logger logger = Logger.getLogger(EmployeeServlet.class);
+
+    private final Logger logger = Logger.getLogger(this.getClass().getSimpleName());
     private final EmployeeService employeeService = new EmployeeService();
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -76,10 +76,10 @@ public class EmployeeServlet extends HttpServlet {
     }
 
     private void showEditEmployeeForm(HttpServletRequest request, HttpServletResponse response) throws SQLException, ServletException, IOException {
-        Employee employee = employeeService.findEmployeeById(Long.valueOf(request.getParameter("id")))
+        EmployeeDTO employeeDTO = employeeService.findEmployeeById(Long.valueOf(request.getParameter("id")))
                 .orElse(null);
         RequestDispatcher dispatcher = request.getRequestDispatcher("employee-edit.jsp");
-        request.setAttribute("employee", employee);
+        request.setAttribute("employee", employeeDTO);
         dispatcher.forward(request, response);
     }
 
@@ -98,8 +98,8 @@ public class EmployeeServlet extends HttpServlet {
     }
 
     private void employeesFromDepartment(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException, ServletException {
-        Set<Employee> employees = employeeService.findAllByDepartmentId(Long.valueOf(request.getParameter("departmentId")));
-        request.setAttribute("listOfEmployees", employees);
+        Set<EmployeeDTO> employeesDTO = employeeService.findAllByDepartmentId(Long.valueOf(request.getParameter("departmentId")));
+        request.setAttribute("listOfEmployees", employeesDTO);
         RequestDispatcher dispatcher = request.getRequestDispatcher("employees-view.jsp");
         dispatcher.forward(request, response);
     }

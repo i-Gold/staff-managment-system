@@ -3,7 +3,6 @@ package com.company.departments.dao.implementation.mysql;
 import com.company.departments.dao.DepartmentDAO;
 import com.company.departments.exception.BadRequest;
 import com.company.departments.model.Department;
-import com.company.departments.model.dto.DepartmentDTO;
 import org.apache.log4j.Logger;
 
 import java.sql.Connection;
@@ -14,13 +13,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static com.company.departments.converter.DepartmentConverter.toDTO;
 import static com.company.departments.dao.implementation.mysql.DataInitializer.getConnection;
 import static com.company.departments.dao.implementation.mysql.queries.Queries.*;
 
 public class DepartmentDAOImpl implements DepartmentDAO {
 
-    private static final Logger logger = Logger.getLogger(DepartmentDAOImpl.class);
+    private final Logger logger = Logger.getLogger(this.getClass().getSimpleName());
 
     @Override
     public Department add(Department department) throws SQLException {
@@ -104,14 +102,14 @@ public class DepartmentDAOImpl implements DepartmentDAO {
     }
 
     @Override
-    public List<DepartmentDTO> getAll() throws SQLException {
-        List<DepartmentDTO> result = new ArrayList<>();
+    public List<Department> getAll() throws SQLException {
+        List<Department> result = new ArrayList<>();
         try (Connection connection = getConnection()) {
             try (PreparedStatement query = connection.prepareStatement(GET_ALL_DEPARTMENTS_FROM_DATABASE)) {
                 try (ResultSet resultSet = query.executeQuery()) {
                     while (resultSet.next()) {
                         result.add(
-                                toDTO(getFromResultSet(resultSet))
+                                getFromResultSet(resultSet)
                         );
                     }
                 }
